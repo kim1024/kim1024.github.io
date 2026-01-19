@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><title>Python线程池 - Blank Space</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="Blank Space"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Blank Space"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="true"><meta property="og:type" content="article"><meta property="og:title" content="Python线程池"><meta property="og:url" content="http://kim1024.github.io/2026/01/19/Python%E7%BA%BF%E7%A8%8B%E6%B1%A0/"><meta property="og:site_name" content="Blank Space"><meta property="og:description" content="true"><meta property="og:locale" content="en_US"><meta property="og:image" content="http://kim1024.github.io/img/og_image.png"><meta property="article:published_time" content="2026-01-19T09:39:55.000Z"><meta property="article:modified_time" content="2026-01-19T09:57:24.975Z"><meta property="article:author" content="Kim"><meta property="article:tag" content="Python"><meta property="twitter:card" content="summary"><meta property="twitter:image:src" content="http://kim1024.github.io/img/og_image.png"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"http://kim1024.github.io/2026/01/19/Python%E7%BA%BF%E7%A8%8B%E6%B1%A0/"},"headline":"Python线程池","image":["http://kim1024.github.io/img/og_image.png"],"datePublished":"2026-01-19T09:39:55.000Z","dateModified":"2026-01-19T09:57:24.975Z","author":{"@type":"Person","name":"Kim"},"publisher":{"@type":"Organization","name":"Blank Space","logo":{"@type":"ImageObject"}},"description":"true"}</script><link rel="canonical" href="http://kim1024.github.io/2026/01/19/Python%E7%BA%BF%E7%A8%8B%E6%B1%A0/"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.0.0/css/all.css"><link data-pjax rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/atom-one-light.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link data-pjax rel="stylesheet" href="/css/default.css"><!--!--><!-- hexo injector head_end start --><script>
+  (function () {
+      function switchTab() {
+          if (!location.hash) {
+            return;
+          }
+
+          const id = '#' + CSS.escape(location.hash.substring(1));
+          const $tabMenu = document.querySelector(`.tabs a[href="${id}"]`);
+          if (!$tabMenu) {
+            return;
+          }
+
+          const $tabMenuContainer = $tabMenu.parentElement.parentElement;
+          Array.from($tabMenuContainer.children).forEach($menu => $menu.classList.remove('is-active'));
+          Array.from($tabMenuContainer.querySelectorAll('a'))
+              .map($menu => document.getElementById($menu.getAttribute("href").substring(1)))
+              .forEach($content => $content.classList.add('is-hidden'));
+
+          if ($tabMenu) {
+              $tabMenu.parentElement.classList.add('is-active');
+          }
+          const $activeTab = document.querySelector(id);
+          if ($activeTab) {
+              $activeTab.classList.remove('is-hidden');
+          }
+      }
+      switchTab();
+      window.addEventListener('hashchange', switchTab, false);
+  })();
+  </script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.1"></head><body class="is-2-column"><nav class="navbar navbar-main"><div class="container navbar-container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/">Blank Space</a></div><div class="navbar-menu"><div class="navbar-end"><a class="navbar-item search" title="Search" href="javascript:;"><i class="fas fa-search"></i></a></div></div></div></nav><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-8-widescreen"><div class="card"><article class="card-content article" role="article"><div class="article-meta is-size-7 is-uppercase level is-mobile"><div class="level-left"><span class="level-item">Posted&nbsp;<time dateTime="2026-01-19T09:39:55.000Z" title="1/19/2026, 5:39:55 PM">2026-01-19</time></span><span class="level-item">Updated&nbsp;<time dateTime="2026-01-19T09:57:24.975Z" title="1/19/2026, 5:57:24 PM">2026-01-19</time></span><span class="level-item">3 minutes read (About 406 words)</span></div></div><h1 class="title is-3 is-size-4-mobile">Python线程池</h1><div class="content"><h2 id="线程池介绍"><a href="#线程池介绍" class="headerlink" title="线程池介绍"></a>线程池介绍</h2><p>Python3 中标准线程池实现位于：<code>concurrent.futures.thread.ThreadPoolExecutor</code>，它于 <strong>Python 3.2</strong> 引入，目的是：</p>
+<ul>
+<li>统一线程 &#x2F; 进程并发模型</li>
+<li>屏蔽线程创建、销毁的成本</li>
+<li>提供 Future 异步结果接口</li>
+<li>简化并发代码结构</li>
+</ul>
+<!--more-->
+
+<p>主要类关系：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Executor</span><br><span class="line"> └── ThreadPoolExecutor</span><br><span class="line">      ├── Worker threads</span><br><span class="line">      ├── WorkQueue</span><br><span class="line">      └── Future</span><br></pre></td></tr></table></figure>
+
+<p>核心对象：</p>
+<table>
+<thead>
+<tr>
+<th><strong>组件</strong></th>
+<th><strong>作用</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ThreadPoolExecutor</td>
+<td>线程池管理器</td>
+</tr>
+<tr>
+<td>threading.Thread</td>
+<td>实际执行任务的工作线程</td>
+</tr>
+<tr>
+<td>queue.Queue</td>
+<td>任务队列（FIFO）</td>
+</tr>
+<tr>
+<td>Future</td>
+<td>任务结果占位符</td>
+</tr>
+<tr>
+<td>_WorkItem</td>
+<td>任务封装单元</td>
+</tr>
+</tbody></table>
+<h2 id="线程池调度"><a href="#线程池调度" class="headerlink" title="线程池调度"></a>线程池调度</h2><p>Python 线程池使用的是：<strong>集中式任务队列 + 抢占式获取任务</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">+-------------------+</span><br><span class="line">|   Queue (FIFO)    |</span><br><span class="line">+-------------------+</span><br><span class="line">   ↑     ↑     ↑</span><br><span class="line">Worker Worker Worker</span><br></pre></td></tr></table></figure>
+
+<p>任务调度是FIFO使用<code>queue.Queue</code>。线程调用是竞争式，所有worker线程阻塞在<code>queue.get()</code>，哪个线程被OS唤醒哪个线程先执行。</p>
+<h2 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> concurrent.futures <span class="keyword">import</span> ThreadPoolExecutor</span><br><span class="line"></span><br><span class="line">pool = ThreadPoolExecutor(max_workers=<span class="number">10</span>)</span><br><span class="line">number = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">task_add</span>(<span class="params">add_number=<span class="number">1</span></span>):</span><br><span class="line">    <span class="keyword">global</span> number</span><br><span class="line">    number += add_number</span><br><span class="line">    <span class="keyword">return</span> number</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">task_get</span>(<span class="params">future</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Currner Number is <span class="subst">&#123;future.result()&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">future_list = []</span><br><span class="line"><span class="comment"># 一次性将任务提交给线程池</span></span><br><span class="line"><span class="keyword">for</span> item <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">int</span>(<span class="number">1e4</span>)):</span><br><span class="line">    future = pool.submit(task_add, item)</span><br><span class="line">    future_list.append(future)</span><br><span class="line">    <span class="keyword">if</span> item % <span class="number">1000</span> == <span class="number">0</span>:</span><br><span class="line">        future.add_done_callback(task_get)  <span class="comment"># 线程执行完成后的回调</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Loop End&quot;</span>)</span><br><span class="line">pool.shutdown(wait=<span class="literal">True</span>)  <span class="comment"># 等待线程池中的任务全部执行完成</span></span><br><span class="line">sum_count = <span class="built_in">sum</span>([future.result() <span class="keyword">for</span> future <span class="keyword">in</span> future_list])</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;End,Sum Count is:<span class="subst">&#123;sum_count&#125;</span>,Current Number is:<span class="subst">&#123;future_list[<span class="number">1000</span>].result()&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>output:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Currner Number is 0</span><br><span class="line">Currner Number is 500212</span><br><span class="line">Currner Number is 2000749</span><br><span class="line">Currner Number is 4501249</span><br><span class="line">Currner Number is 7968646</span><br><span class="line">Currner Number is 12472848</span><br><span class="line">Currner Number is 17965886</span><br><span class="line">Currner Number is 40476059</span><br><span class="line">Currner Number is 31970260</span><br><span class="line">Currner Number is 24471687</span><br><span class="line">Loop End</span><br><span class="line">End,Sum Count is:166778486073,Current Number is:500212</span><br></pre></td></tr></table></figure>
+</div><div class="article-tags is-size-7 mb-4"><span class="mr-2">#</span><a class="link-muted mr-2" rel="tag" href="/tags/Python/">Python</a></div><!--!--></article></div><!--!--><nav class="post-navigation mt-4 level is-mobile"><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/2026/01/19/Python-Process-Thread-Coroutine-GIL/"><span class="level-item">Python-Process-Thread-Coroutine-GIL</span><i class="level-item fas fa-chevron-right"></i></a></div></nav><!--!--></div><div class="column column-left is-4-tablet is-4-desktop is-4-widescreen  order-1"><div class="card widget" data-type="profile"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="avatar" src="/img/avatar.png" alt="Kim"></figure><p class="title is-size-4 is-block" style="line-height:inherit;">Kim</p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">Posts</p><a href="/archives/"><p class="title">2</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">Categories</p><a href="/categories/"><p class="title">0</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">Tag</p><a href="/tags/"><p class="title">1</p></a></div></div></nav></div></div><div class="card widget" data-type="recent-posts"><div class="card-content"><h3 class="menu-label">Recents</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-01-19T09:39:55.000Z">2026-01-19</time></p><p class="title"><a href="/2026/01/19/Python%E7%BA%BF%E7%A8%8B%E6%B1%A0/">Python线程池</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-01-19T06:41:25.000Z">2026-01-19</time></p><p class="title"><a href="/2026/01/19/Python-Process-Thread-Coroutine-GIL/">Python-Process-Thread-Coroutine-GIL</a></p></div></article></div></div><!--!--></div><!--!--></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/">Blank Space</a><p class="is-size-7"><span>&copy; 2026 Kim</span>  Powered by <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a> &amp; <a href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank" rel="noopener">Icarus</a></p></div><div class="level-end"></div></div></div></footer><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script><script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script><script>moment.locale("en");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script data-pjax src="/js/column.js"></script><script type="text/javascript" id="MathJax-script" async>MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      },
+      svg: {
+        fontCache: 'global'
+      },
+      chtml: {
+        matchFontHeight: false
+      }
+    };</script><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script><script data-pjax src="/js/main.js" defer></script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="Type something..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script data-pjax src="/js/insight.js" defer></script><script data-pjax>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"Type something...","untitled":"(Untitled)","posts":"Posts","pages":"Pages","categories":"Categories","tags":"Tags"});
+        });</script></body></html>
